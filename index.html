@@ -82,7 +82,22 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 @media (max-width: 640px) { .opciones { grid-template-columns: 1fr; } .abanico .carta { width: 110px; margin-left: -50px; } }
 
 /* Jugar */
-.jugar { display: flex; flex-direction: column; gap: 16px; max-width: 560px; }
+.jugar { max-width: 560px; }
+.elegir, .mi-tabla { display: flex; flex-direction: column; gap: 16px; }
+.opciones-tabla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.op-tabla {
+  display: flex; flex-direction: column; gap: 8px; padding: 10px; text-align: left;
+  background: var(--card); color: var(--ink); border: 3px solid var(--card); border-radius: 14px;
+  animation: reparte 0.5s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i) * 80ms);
+}
+.op-tabla:hover, .op-tabla:focus-visible { border-color: var(--dilemas); }
+.op-cab { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.op-cab b { font-family: var(--display); font-weight: 400; font-size: 20px; }
+.op-cab span { font-size: 13px; font-weight: 800; background: var(--ink); color: var(--card); padding: 4px 10px; border-radius: 999px; }
+.op-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.op-grid .mini { min-height: 58px; font-size: 10px; border: 1px solid #E4DAC4; border-top-width: 5px; word-break: break-word; }
+.op-grid .mini b { font-size: 13px; }
+@media (max-width: 380px) { .opciones-tabla { grid-template-columns: 1fr; } }
 .jugar .barra { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .tabla-n { text-align: right; }
 .tabla-n b { display: block; font-family: var(--display); font-weight: 400; font-size: 30px; line-height: 1; }
@@ -164,7 +179,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 <!-- Inicio -->
 <section class="vista inicio" id="v-inicio">
   <div class="marca"><div><small>Ingeniería, ética y sociedad · Tema 4.4</small><h1>Lotería de la ética</h1></div></div>
-  <p class="lead">Cada quien tiene su tabla en el celular. Los expositores cantan desde el proyector: un verso y una definición. Si tienes ese concepto, ponle frijol. Gana quien llene su tabla primero.</p>
+  <p class="lead">Cada quien elige su tabla en el celular. Los expositores cantan desde el proyector: un verso y una definición. Si tienes ese concepto, ponle frijol. Gana quien llene su tabla primero.</p>
   <div class="abanico" id="abanico" aria-hidden="true"></div>
   <div class="opciones">
     <button class="opcion" type="button" id="ir-jugar"><b>Jugar</b><span>Abre tu tabla en el celular.</span></button>
@@ -174,6 +189,13 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 
 <!-- Jugar (celular) -->
 <section class="vista jugar" id="v-jugar" hidden>
+  <div class="elegir" id="elegir" hidden>
+    <div class="marca"><div><small>Tema 4.4 · Lotería</small><h1>Elige tu tabla</h1></div></div>
+    <p class="ayuda">Mira las cartas de cada tabla y quédate con la que más te guste. Si ninguna te convence, pide otras.</p>
+    <div class="opciones-tabla" id="opciones-tabla"></div>
+    <button class="btn" type="button" id="btn-otras">Mostrar otras tablas</button>
+  </div>
+  <div class="mi-tabla" id="mi-tabla" hidden>
   <div class="barra">
     <div class="marca"><div><small>Tema 4.4</small><h1>Lotería</h1></div></div>
     <div class="tabla-n"><span>Tu tabla</span><b id="tabla-num">—</b></div>
@@ -185,9 +207,11 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
     <button class="btn" type="button" id="btn-limpiar">Quitar frijoles</button>
   </div>
   <div class="cambiar">
-    <label for="otra-tabla">Cambiar a la tabla número</label>
+    <button class="btn" type="button" id="btn-elegir-otra">Elegir otra tabla</button>
+    <label for="otra-tabla">o escribe un número</label>
     <input id="otra-tabla" type="number" inputmode="numeric" min="1" max="999">
     <button class="btn" type="button" id="btn-cambiar">Cambiar</button>
+  </div>
   </div>
 </section>
 <div class="aviso-lot" id="aviso-lot" hidden>
@@ -337,12 +361,35 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   // ---- Jugar ----
   var tablaNum = null, marcas = [];
   function iniciarJugar() {
-    if (tablaNum === null) {
-      tablaNum = leer('loteria-tabla', null);
-      if (!tablaNum) { tablaNum = 1 + Math.floor(Math.random() * 999); guardar('loteria-tabla', tablaNum); }
-    }
+    if (tablaNum === null) tablaNum = leer('loteria-tabla', null);
+    if (tablaNum) mostrarTabla(); else mostrarElegir();
+  }
+  function mostrarTabla() {
+    $('elegir').hidden = true; $('mi-tabla').hidden = false;
     pintarTabla();
   }
+  function mostrarElegir() {
+    $('mi-tabla').hidden = true; $('elegir').hidden = false;
+    var nums = [];
+    while (nums.length < 4) { var n = 1 + Math.floor(Math.random() * 999); if (nums.indexOf(n) < 0 && n !== tablaNum) nums.push(n); }
+    $('opciones-tabla').innerHTML = nums.map(function (n, i) {
+      return '<button type="button" class="op-tabla" style="--i:' + i + '" data-n="' + n + '" aria-label="Elegir la tabla ' + n + '">' +
+        '<span class="op-cab"><b>Tabla ' + n + '</b><span>Elegir</span></span><span class="op-grid">' +
+        cartasDeTabla(n).map(function (id) {
+          var c = CARTAS[id];
+          return '<span class="mini g-' + c.grupo + '"><b>' + c.num + '</b>' + c.nombre + '</span>';
+        }).join('') + '</span></button>';
+    }).join('');
+    scrollTo(0, 0);
+  }
+  $('opciones-tabla').addEventListener('click', function (e) {
+    var b = e.target.closest('.op-tabla');
+    if (!b) return;
+    tablaNum = +b.dataset.n; guardar('loteria-tabla', tablaNum);
+    mostrarTabla(); scrollTo(0, 0);
+  });
+  $('btn-otras').addEventListener('click', mostrarElegir);
+  $('btn-elegir-otra').addEventListener('click', mostrarElegir);
   function pintarTabla() {
     $('tabla-num').textContent = tablaNum;
     $('aviso-num').textContent = tablaNum;
@@ -367,7 +414,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   $('cerrar-aviso').addEventListener('click', function () { $('aviso-lot').hidden = true; });
   $('btn-cambiar').addEventListener('click', function () {
     var n = parseInt($('otra-tabla').value, 10);
-    if (n >= 1 && n <= 999) { tablaNum = n; guardar('loteria-tabla', n); $('otra-tabla').value = ''; pintarTabla(); }
+    if (n >= 1 && n <= 999) { tablaNum = n; guardar('loteria-tabla', n); $('otra-tabla').value = ''; mostrarTabla(); }
   });
 
   // ---- Cantar ----
