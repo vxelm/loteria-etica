@@ -176,19 +176,8 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 </style>
 </head>
 <body>
-<!-- Inicio -->
-<section class="vista inicio" id="v-inicio">
-  <div class="marca"><div><small>Ingeniería, ética y sociedad · Tema 4.4</small><h1>Lotería de la ética</h1></div></div>
-  <p class="lead">Cada quien elige su tabla en el celular. Los expositores cantan desde el proyector: un verso y una definición. Si tienes ese concepto, ponle frijol. Gana quien llene su tabla primero.</p>
-  <div class="abanico" id="abanico" aria-hidden="true"></div>
-  <div class="opciones">
-    <button class="opcion" type="button" id="ir-jugar"><b>Jugar</b><span>Abre tu tabla en el celular.</span></button>
-    <button class="opcion" type="button" id="ir-cantar"><b>Cantar</b><span>Para la laptop en el proyector: baraja, canta y revisa tablas.</span></button>
-  </div>
-</section>
-
 <!-- Jugar (celular) -->
-<section class="vista jugar" id="v-jugar" hidden>
+<section class="vista jugar" id="v-jugar">
   <div class="elegir" id="elegir" hidden>
     <div class="marca"><div><small>Tema 4.4 · Lotería</small><h1>Elige tu tabla</h1></div></div>
     <p class="ayuda">Mira las cartas de cada tabla y quédate con la que más te guste. Si ninguna te convence, pide otras.</p>
@@ -223,57 +212,12 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   </div>
 </div>
 
-<!-- Cantar (proyector) -->
-<section class="vista cantar" id="v-cantar" hidden>
-  <div class="principal">
-    <div class="cabeza">
-      <div class="marca"><div><small>Tema 4.4 · Cantar</small><h1>Lotería de la ética</h1></div></div>
-      <p class="cuenta" id="cuenta">0 de 24 cartas</p>
-    </div>
-    <div class="escenario" id="escenario">
-      <div class="vacio-c" id="carta-actual">Presiona “Cantar carta” o la barra espaciadora para empezar.</div>
-      <div class="texto">
-        <p class="tema" id="c-tema"></p>
-        <p class="verso" id="c-verso">Corre y se va, corre y se va…</p>
-        <p class="def" id="c-def">Las cartas salen en orden aleatorio. Lean el verso en voz alta y luego la definición.</p>
-      </div>
-    </div>
-    <div class="controles">
-      <button class="btn lleno grande" type="button" id="btn-siguiente">Cantar carta</button>
-      <button class="btn" type="button" id="btn-anterior">Ver anterior</button>
-      <button class="btn peligro" type="button" id="btn-nueva">Nueva partida</button>
-      <span class="atajo">Espacio: siguiente carta</span>
-    </div>
-    <div class="cantadas">
-      <h3>Ya salieron</h3>
-      <div class="tira" id="tira"></div>
-    </div>
-  </div>
-  <div class="lateral">
-    <div class="panel">
-      <h3>Únete al juego</h3>
-      <div class="qr">
-        <div class="img" id="qr"></div>
-        <div style="flex:1;min-width:180px"><p>Escanea con la cámara del celular. Funciona con datos móviles y no necesita la red de la laptop.</p><code id="qr-url"></code></div>
-      </div>
-    </div>
-    <div class="panel">
-      <h3>Revisar una tabla</h3>
-      <form class="verificar" id="form-verificar">
-        <label for="num-verificar" class="ayuda" style="width:100%">Número de tabla que gritó “¡Lotería!”</label>
-        <input id="num-verificar" type="number" inputmode="numeric" min="1" max="999" required>
-        <button class="btn lleno" type="submit">Revisar</button>
-      </form>
-      <div id="resultado"></div>
-    </div>
-  </div>
-</section>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 (function () {
   // Enlace público del juego (se completa al publicar)
-  var URL_JUEGO = location.protocol.indexOf('http') === 0 ? location.origin + location.pathname : '';
+  var URL_JUEGO = 'https://vxelm.github.io/loteria-etica/';
+  // En la copia pública (GitHub Pages) sólo existe la vista para jugar
+  var SOLO_JUGAR = true;
 
   var GRUPOS = {
     libertad: 'Libertad y voluntad',
@@ -339,24 +283,25 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   }
 
   // Vistas
-  var vistas = { inicio: $('v-inicio'), jugar: $('v-jugar'), cantar: $('v-cantar') };
+  var vistas = SOLO_JUGAR ? { jugar: $('v-jugar') } : { inicio: $('v-inicio'), jugar: $('v-jugar'), cantar: $('v-cantar') };
   function mostrar() {
     var h = location.hash.replace('#', '');
-    var v = vistas[h] ? h : 'inicio';
+    var v = SOLO_JUGAR ? 'jugar' : (vistas[h] ? h : 'inicio');
     Object.keys(vistas).forEach(function (k) { vistas[k].hidden = k !== v; });
     if (v === 'jugar') iniciarJugar();
     if (v === 'cantar') iniciarCantar();
   }
   addEventListener('hashchange', mostrar);
-  $('ir-jugar').addEventListener('click', function () { location.hash = 'jugar'; });
-  $('ir-cantar').addEventListener('click', function () { location.hash = 'cantar'; });
-
-  // Abanico de portada
-  var ab = [0, 4, 8, 14, 20, 22];
-  $('abanico').innerHTML = ab.map(function (id, i) {
-    var r = (i - 2.5) * 6, y = Math.abs(i - 2.5) * 8;
-    return cartaHTML(CARTAS[id]).replace('class="carta', 'style="--i:' + i + ';--r:' + r + 'deg;--y:' + y + 'px" class="carta');
-  }).join('');
+  if (!SOLO_JUGAR) {
+    $('ir-jugar').addEventListener('click', function () { location.hash = 'jugar'; });
+    $('ir-cantar').addEventListener('click', function () { location.hash = 'cantar'; });
+    // Abanico de portada
+    var ab = [0, 4, 8, 14, 20, 22];
+    $('abanico').innerHTML = ab.map(function (id, i) {
+      var r = (i - 2.5) * 6, y = Math.abs(i - 2.5) * 8;
+      return cartaHTML(CARTAS[id]).replace('class="carta', 'style="--i:' + i + ';--r:' + r + 'deg;--y:' + y + 'px" class="carta');
+    }).join('');
+  }
 
   // ---- Jugar ----
   var tablaNum = null, marcas = [];
@@ -466,6 +411,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
     guardar('loteria-partida', partida);
     pintarCanto(true);
   }
+  if (!SOLO_JUGAR) {
   $('btn-siguiente').addEventListener('click', siguiente);
   $('btn-anterior').addEventListener('click', function () { if (vista > 0) { vista--; pintarCanto(true); } });
   var confirmar = false, tConf = null;
@@ -499,6 +445,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
       ? '<div class="resultado gana"><p class="titulo">¡Tabla ' + n + ' gana!</p><p>Todas sus cartas ya salieron.</p><div class="mini-tabla">' + celdas + '</div></div>'
       : '<div class="resultado falta"><p class="titulo">Tabla ' + n + ': todavía no</p><p>Le ' + (faltan.length === 1 ? 'falta 1 carta' : 'faltan ' + faltan.length + ' cartas') + ' (tachadas). Sigue el juego.</p><div class="mini-tabla">' + celdas + '</div></div>';
   });
+  }
 
   function pintarQR() {
     var url = URL_JUEGO ? URL_JUEGO + '#jugar' : '';
