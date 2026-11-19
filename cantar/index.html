@@ -186,6 +186,12 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .resultado .mini-tabla { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
 .resultado .mini-tabla span { font-size: 12px; padding: 4px 6px; border-radius: 6px; background: rgba(0,0,0,0.18); }
 .resultado .mini-tabla span.no { background: rgba(255,255,255,0.85); color: #7A1440; text-decoration: line-through; }
+.ganadores { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ganadores li { display: grid; grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center; background: var(--bg); border-radius: 12px; padding: 10px 14px; animation: entra 0.5s cubic-bezier(.2,.7,.2,1) both; }
+.ganadores .lugar { font-family: var(--display); font-size: 28px; color: var(--dilemas); line-height: 1; }
+.ganadores li:first-child .lugar { color: #F2C94C; }
+.ganadores .quien { font-weight: 800; font-size: 18px; }
+.ganadores .cuando { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 @media (max-width: 980px) { .cantar { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .escenario { grid-template-columns: 1fr; } .escenario .carta, .vacio-c { max-width: 220px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
@@ -285,6 +291,11 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
         <button class="btn lleno" type="submit">Revisar</button>
       </form>
       <div id="resultado"></div>
+    </div>
+    <div class="panel">
+      <h3>Ya hicieron lotería</h3>
+      <ol class="ganadores" id="ganadores"></ol>
+      <p class="ayuda" id="sin-ganadores">Todavía nadie. Cuando revisen una tabla ganadora, aparece aquí con su lugar.</p>
     </div>
   </div>
 </section>
@@ -484,7 +495,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   // ---- Cantar ----
   var partida = null, vista = -1, armado = false;
   function nuevaPartida() {
-    partida = { orden: barajar(CARTAS.length, Math.floor(Math.random() * 1e9)), cantadas: 0 };
+    partida = { orden: barajar(CARTAS.length, Math.floor(Math.random() * 1e9)), cantadas: 0, ganadores: [] };
     vista = -1;
     guardar(clave('loteria-partida'), partida);
   }
@@ -499,6 +510,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
     if (!partida) {
       partida = leer(clave('loteria-partida'), null);
       if (!partida || !partida.orden || partida.orden.length !== CARTAS.length) nuevaPartida();
+      if (!partida.ganadores) partida.ganadores = [];
       vista = partida.cantadas - 1;
     }
     pintarQR();
@@ -533,6 +545,14 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
     $('tira').innerHTML = cantadasSet().map(function (id) {
       var c = CARTAS[id];
       return '<div class="mini g-' + c.grupo + '"><b>' + c.num + '</b>' + c.nombre + '</div>';
+    }).join('');
+    pintarGanadores();
+  }
+  function pintarGanadores() {
+    var g = partida.ganadores || [];
+    $('sin-ganadores').hidden = g.length > 0;
+    $('ganadores').innerHTML = g.map(function (x, i) {
+      return '<li><span class="lugar">' + (i + 1) + 'º</span><span class="quien">Tabla ' + x.n + '</span><span class="cuando">con ' + x.cartas + ' cartas</span></li>';
     }).join('');
   }
   function siguiente() {
@@ -574,8 +594,21 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
     var celdas = ids.map(function (id) {
       return '<span class="' + (salio.indexOf(id) < 0 ? 'no' : '') + '">' + CARTAS[id].nombre + '</span>';
     }).join('');
+    var lugar = 0;
+    if (faltan.length === 0) {
+      var ya = -1;
+      partida.ganadores.forEach(function (x, i) { if (x.n === n) ya = i; });
+      if (ya < 0) {
+        partida.ganadores.push({ n: n, cartas: partida.cantadas });
+        guardar(clave('loteria-partida'), partida);
+        lugar = partida.ganadores.length;
+        pintarGanadores();
+      } else {
+        lugar = -(ya + 1);
+      }
+    }
     $('resultado').innerHTML = faltan.length === 0
-      ? '<div class="resultado gana"><p class="titulo">¡Tabla ' + n + ' gana!</p><p>Todas sus cartas ya salieron.</p><div class="mini-tabla">' + celdas + '</div></div>'
+      ? '<div class="resultado gana"><p class="titulo">' + (lugar > 0 ? '¡Tabla ' + n + ' gana! Lugar ' + lugar + 'º' : 'Tabla ' + n + ' ya hizo lotería (lugar ' + (-lugar) + 'º)') + '</p><p>Todas sus cartas ya salieron.</p><div class="mini-tabla">' + celdas + '</div></div>'
       : '<div class="resultado falta"><p class="titulo">Tabla ' + n + ': todavía no</p><p>Le ' + (faltan.length === 1 ? 'falta 1 carta' : 'faltan ' + faltan.length + ' cartas') + ' (tachadas). Sigue el juego.</p><div class="mini-tabla">' + celdas + '</div></div>';
   });
   }
