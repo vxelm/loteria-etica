@@ -231,7 +231,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   <div class="cambiar">
     <button class="btn" type="button" id="btn-elegir-otra">Elegir otra tabla</button>
     <label for="otra-tabla">o escribe un número</label>
-    <input id="otra-tabla" type="number" inputmode="numeric" min="1" max="999">
+    <input id="otra-tabla" type="number" inputmode="numeric" min="1" max="9999">
     <button class="btn" type="button" id="btn-cambiar">Cambiar</button>
   </div>
   </div>
@@ -287,7 +287,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
       <h3>Revisar una tabla</h3>
       <form class="verificar" id="form-verificar">
         <label for="num-verificar" class="ayuda" style="width:100%">Número de tabla que gritó “¡Lotería!”</label>
-        <input id="num-verificar" type="number" inputmode="numeric" min="1" max="999" required>
+        <input id="num-verificar" type="number" inputmode="numeric" min="1" max="9999" required>
         <button class="btn lleno" type="submit">Revisar</button>
       </form>
       <div id="resultado"></div>
@@ -446,7 +446,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   function mostrarElegir() {
     $('mi-tabla').hidden = true; $('elegir').hidden = false;
     var nums = [];
-    while (nums.length < 4) { var n = 1 + Math.floor(Math.random() * 999); if (nums.indexOf(n) < 0 && n !== tablaNum) nums.push(n); }
+    while (nums.length < 4) { var n = 1 + Math.floor(Math.random() * 9999); if (nums.indexOf(n) < 0 && n !== tablaNum) nums.push(n); }
     $('opciones-tabla').innerHTML = nums.map(function (n, i) {
       return '<button type="button" class="op-tabla" style="--i:' + i + '" data-n="' + n + '" aria-label="Elegir la tabla ' + n + '">' +
         '<span class="op-cab"><b>Tabla ' + n + '</b><span>Elegir</span></span><span class="op-grid">' +
@@ -489,7 +489,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   $('cerrar-aviso').addEventListener('click', function () { $('aviso-lot').hidden = true; });
   $('btn-cambiar').addEventListener('click', function () {
     var n = parseInt($('otra-tabla').value, 10);
-    if (n >= 1 && n <= 999) { tablaNum = n; guardar(clave('loteria-tabla'), n); $('otra-tabla').value = ''; mostrarTabla(); }
+    if (n >= 1 && n <= 9999) { tablaNum = n; guardar(clave('loteria-tabla'), n); $('otra-tabla').value = ''; mostrarTabla(); }
   });
 
   // ---- Cantar ----
@@ -588,7 +588,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   $('form-verificar').addEventListener('submit', function (e) {
     e.preventDefault();
     var n = parseInt($('num-verificar').value, 10);
-    if (!(n >= 1 && n <= 999)) { $('resultado').innerHTML = '<div class="resultado falta">Escribe un número de tabla entre 1 y 999.</div>'; return; }
+    if (!(n >= 1 && n <= 9999)) { $('resultado').innerHTML = '<div class="resultado falta">Escribe un número de tabla entre 1 y 9999.</div>'; return; }
     var ids = cartasDeTabla(n), salio = cantadasSet();
     var faltan = ids.filter(function (id) { return salio.indexOf(id) < 0; });
     var celdas = ids.map(function (id) {
