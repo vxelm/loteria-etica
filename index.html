@@ -20,6 +20,10 @@
   --libertad: #2D6CB5;
   --educacion: #C92A6D;
   --dilemas: #D98E04;
+  --etica: #3E9A6A;
+  --ingenieria: #2D6CB5;
+  --legislacion: #C92A6D;
+  --retos: #D98E04;
   --frijol: #6B3A1E;
   --ok: #3FA66B;
   --display: 'Alfa Slab One', 'Rockwell', Georgia, serif;
@@ -67,6 +71,18 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .g-educacion .grupo, .g-educacion .simbolo span { background: var(--educacion); }
 .g-dilemas .grupo, .g-dilemas .simbolo span { background: var(--dilemas); }
 .g-dilemas .simbolo span { color: var(--ink); }
+.g-etica .grupo, .g-etica .simbolo span { background: var(--etica); }
+.g-ingenieria .grupo, .g-ingenieria .simbolo span { background: var(--ingenieria); }
+.g-legislacion .grupo, .g-legislacion .simbolo span { background: var(--legislacion); }
+.g-retos .grupo, .g-retos .simbolo span { background: var(--retos); }
+.g-retos .simbolo span { color: var(--ink); }
+.mini.g-etica { border-top-color: var(--etica); }
+.mini.g-ingenieria { border-top-color: var(--ingenieria); }
+.mini.g-legislacion { border-top-color: var(--legislacion); }
+.mini.g-retos { border-top-color: var(--retos); }
+.ronda { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { border: 2px solid var(--soft); background: transparent; color: var(--muted); font-weight: 800; font-size: 15px; padding: 8px 16px; border-radius: 999px; }
+.chip[aria-pressed="true"] { background: var(--card); border-color: var(--card); color: var(--ink); }
 
 /* Inicio */
 .inicio { display: flex; flex-direction: column; gap: 32px; padding-top: 6vh; }
@@ -179,14 +195,14 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 <!-- Jugar (celular) -->
 <section class="vista jugar" id="v-jugar">
   <div class="elegir" id="elegir" hidden>
-    <div class="marca"><div><small>Tema 4.4 · Lotería</small><h1>Elige tu tabla</h1></div></div>
+    <div class="marca"><div><small><span class="mazo-nombre">Tema 4.4</span> · Lotería</small><h1>Elige tu tabla</h1></div></div>
     <p class="ayuda">Mira las cartas de cada tabla y quédate con la que más te guste. Si ninguna te convence, pide otras.</p>
     <div class="opciones-tabla" id="opciones-tabla"></div>
     <button class="btn" type="button" id="btn-otras">Mostrar otras tablas</button>
   </div>
   <div class="mi-tabla" id="mi-tabla" hidden>
   <div class="barra">
-    <div class="marca"><div><small>Tema 4.4</small><h1>Lotería</h1></div></div>
+    <div class="marca"><div><small class="mazo-nombre">Tema 4.4</small><h1>Lotería</h1></div></div>
     <div class="tabla-n"><span>Tu tabla</span><b id="tabla-num">—</b></div>
   </div>
   <div class="tabla" id="tabla"></div>
@@ -219,12 +235,8 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   // En la copia pública (GitHub Pages) sólo existe la vista para jugar
   var SOLO_JUGAR = true;
 
-  var GRUPOS = {
-    libertad: 'Libertad y voluntad',
-    educacion: 'Educación y legislación',
-    dilemas: 'Dilemas éticos'
-  };
-  var CARTAS = [
+  function armar(lista) { return lista.map(function (c, i) { return { id: i, num: i + 1, grupo: c[0], nombre: c[1], verso: c[2], def: c[3] }; }); }
+  var TEMA44 = [
     ['libertad', 'La libertad “de”', 'Nadie me encierra ni me pone candado: con la libertad “de” nadie me ha atado.', 'Que nadie te impida actuar o expresarte.'],
     ['libertad', 'La libertad “para”', 'No basta el permiso si faltan los medios: la libertad “para” te da los remedios.', 'Tener la información y los recursos para elegir de verdad.'],
     ['libertad', 'La voluntad', 'Lo pienso, lo elijo y lo sostengo: la voluntad es lo que yo tengo.', 'Decidir por razones propias y sostener la decisión, no por impulso.'],
@@ -249,9 +261,50 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
     ['dilemas', 'Las pruebas de software', 'Antes de lanzarla, pruébala bien, que de tu código depende alguien.', 'Verificar que un sistema funciona bien antes de que lo use la gente.'],
     ['dilemas', 'El sesgo algorítmico', 'Del pasado aprendió y lo injusto repitió: el sesgo en los datos nadie lo pidió.', 'Cuando un sistema trata peor a un grupo porque aprendió de datos injustos.'],
     ['dilemas', 'La equidad de género', 'Mismas oportunidades para ellas y ellos: que el sistema no juzgue por los sellos.', 'Trato justo a todas las personas sin importar su género, como en el caso de la IA de contratación de Amazon.']
-  ].map(function (c, i) { return { id: i, num: i + 1, grupo: c[0], nombre: c[1], verso: c[2], def: c[3] }; });
+  ];
+  var UNIDAD4 = [
+    ['etica', 'El ethos', 'Costumbre y carácter en griego se dice así: el ethos es la forma en que eliges vivir.', 'Palabra griega que significa costumbres y carácter; de ella viene “ética”.'],
+    ['etica', 'La moral', 'Del latín “mores” me vine a llamar: las normas del grupo que debes respetar.', 'Las normas y costumbres de una comunidad sobre lo que está bien y lo que está mal.'],
+    ['etica', 'La ética', 'No sólo describo, yo vengo a juzgar cuál es la mejor manera de actuar.', 'La reflexión sobre lo bueno y lo justo: el criterio para distinguir las buenas acciones de las malas.'],
+    ['etica', 'Los valores', 'Honestidad, respeto y justicia también: los valores te guían para obrar bien.', 'Cualidades que consideramos valiosas y que orientan nuestra conducta.'],
+    ['etica', 'Los principios', 'Son reglas firmes que no he de soltar, aunque me ofrezcan algo por cambiar.', 'Normas fundamentales que guían las decisiones y se apoyan en los valores.'],
+    ['etica', 'La injusticia', 'Si fue un terremoto, fue fatalidad; si alguien lo causó, hay responsabilidad.', 'Un daño causado por personas que pudo evitarse; a diferencia de la fatalidad, tiene responsable.'],
+    ['ingenieria', 'La integridad', 'Lo que pienso, digo y hago es igual: la integridad me mantiene cabal.', 'Actuar con coherencia y con valores aunque nadie te esté viendo.'],
+    ['ingenieria', 'El plagio', 'Copiaste el código y cambiaste el nombre: es plagio, aunque a nadie le asombre.', 'Presentar ideas, textos o código ajeno como si fueran propios.'],
+    ['ingenieria', 'La colusión', 'En el examen me pasaste la respuesta: la colusión al final cara cuesta.', 'Colaborar sin permiso en un trabajo o examen individual.'],
+    ['ingenieria', 'El conflicto de interés', 'Si evalúas la empresa de tu primo hermano, declara el conflicto y hazte a un lado.', 'Un interés personal que puede sesgar tu juicio profesional.'],
+    ['ingenieria', 'La confidencialidad', 'Lo que el cliente te cuenta en secreto se queda: la confidencialidad no se vende ni se presta.', 'Proteger la información de clientes, usuarios y empleadores.'],
+    ['ingenieria', 'La misión del profesionista', 'No sólo es tu sueldo ni tu reputación: servir a la sociedad es tu misión.', 'Poner el conocimiento al servicio de la sociedad y del bienestar común.'],
+    ['legislacion', 'La ley', 'Si no la cumples, te llega la sanción: la ley es obligatoria para toda la nación.', 'Norma obligatoria que emite el Estado; incumplirla tiene una sanción.'],
+    ['legislacion', 'El reglamento', 'La ley es la idea y yo el instructivo: el reglamento la vuelve operativo.', 'Disposición que detalla cómo se aplica una ley.'],
+    ['legislacion', 'La norma técnica', 'Con NOM o con ISO se mide la calidad: la norma técnica fija el estándar a cumplir.', 'Documento que fija especificaciones y estándares, como las NOM mexicanas o las normas ISO.'],
+    ['legislacion', 'El código de ética', 'No te meten preso, pero pesa en la conciencia: el código de ética pide coherencia.', 'Principios que guían la conducta; su fuerza es moral, no una sanción penal.'],
+    ['legislacion', 'El código profesional', 'La ACM y la IEEE lo escribieron con cuidado: lo que debe cumplir quien ejerce su grado.', 'Normas que un gremio adopta para sus miembros, como los códigos de la ACM y del IEEE.'],
+    ['legislacion', 'El código de ética del ingeniero', 'La seguridad y el bien del público primero: así lo promete todo buen ingeniero.', 'Compromiso de anteponer la seguridad, la salud y el bienestar del público en su trabajo.'],
+    ['retos', 'La voluntad', 'Lo pienso, lo elijo y lo sostengo: la voluntad es lo que yo tengo.', 'Decidir por razones propias y sostener la decisión, no por impulso.'],
+    ['retos', 'El patrón oscuro', 'El botón de cancelar lo escondieron en un rincón: es un patrón oscuro, no fue confusión.', 'Un diseño que empuja al usuario a hacer algo que no habría elegido.'],
+    ['retos', 'El deepfake', 'Te dicen que es broma y que es pura IA, pero a la víctima igual le dolía.', 'Una imagen, audio o video falso creado con inteligencia artificial.'],
+    ['retos', 'La obsolescencia programada', 'Lo hicieron para que dure poquito, y compres otro aunque esté bonito.', 'Diseñar un producto para que deje de servir antes de tiempo.'],
+    ['retos', 'El Therac-25', 'Un error de código, una dosis mortal: el software crítico se prueba total.', 'Máquina de radioterapia cuyos errores de software causaron sobredosis (1985–1987).'],
+    ['retos', 'El sesgo algorítmico', 'Del pasado aprendió y lo injusto repitió: el sesgo en los datos nadie lo pidió.', 'Cuando un sistema trata peor a un grupo porque aprendió de datos injustos.']
+  ];
+  var MAZOS = {
+    tema44: { titulo: 'Tema 4.4', hash: 'jugar', sal: 13, cartas: armar(TEMA44),
+      grupos: { libertad: 'Libertad y voluntad', educacion: 'Educación y legislación', dilemas: 'Dilemas éticos' } },
+    unidad4: { titulo: 'Unidad IV', hash: 'unidad4', sal: 101, cartas: armar(UNIDAD4),
+      grupos: { etica: '4.1 Ética y moral', ingenieria: '4.2 La ética y la ingeniería', legislacion: '4.3 Ética y legislación', retos: '4.4 Retos actuales' } }
+  };
+  var mazoId, MAZO, CARTAS, GRUPOS;
 
   var $ = function (id) { return document.getElementById(id); };
+  function usarMazo(id) {
+    mazoId = id; MAZO = MAZOS[id]; CARTAS = MAZO.cartas; GRUPOS = MAZO.grupos;
+    Array.prototype.forEach.call(document.querySelectorAll('.mazo-nombre'), function (el) { el.textContent = MAZO.titulo; });
+    Array.prototype.forEach.call(document.querySelectorAll('.chip[data-mazo]'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.mazo === id)); });
+  }
+  // Las claves del Tema 4.4 se quedan como estaban para no perder tablas ya elegidas
+  function clave(base) { return mazoId === 'tema44' ? base : base + '-' + mazoId; }
+  usarMazo('tema44');
   function guardar(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function leer(k, d) { try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
 
@@ -272,7 +325,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
     for (var j = n - 1; j > 0; j--) { var k = Math.floor(r() * (j + 1)); var t = a[j]; a[j] = a[k]; a[k] = t; }
     return a;
   }
-  function cartasDeTabla(n) { return barajar(CARTAS.length, n * 7919 + 13).slice(0, 9); }
+  function cartasDeTabla(n) { return barajar(CARTAS.length, n * 7919 + MAZO.sal).slice(0, 9); }
   function inicial(nombre) {
     var w = nombre.replace(/[“”]/g, '').split(' ').filter(function (x) { return !/^(la|el|los|las|de|para)$/i.test(x); });
     return (w[0] || nombre).charAt(0).toUpperCase();
@@ -286,9 +339,13 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   var vistas = SOLO_JUGAR ? { jugar: $('v-jugar') } : { inicio: $('v-inicio'), jugar: $('v-jugar'), cantar: $('v-cantar') };
   function mostrar() {
     var h = location.hash.replace('#', '');
-    var v = SOLO_JUGAR ? 'jugar' : (vistas[h] ? h : 'inicio');
+    var v = (SOLO_JUGAR || h === 'unidad4') ? 'jugar' : (vistas[h] ? h : 'inicio');
     Object.keys(vistas).forEach(function (k) { vistas[k].hidden = k !== v; });
-    if (v === 'jugar') iniciarJugar();
+    if (v === 'jugar') {
+      var m = h === 'unidad4' ? 'unidad4' : 'tema44';
+      if (m !== mazoId) { usarMazo(m); tablaNum = null; }
+      iniciarJugar();
+    }
     if (v === 'cantar') iniciarCantar();
   }
   addEventListener('hashchange', mostrar);
@@ -306,7 +363,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   // ---- Jugar ----
   var tablaNum = null, marcas = [];
   function iniciarJugar() {
-    if (tablaNum === null) tablaNum = leer('loteria-tabla', null);
+    if (tablaNum === null) tablaNum = leer(clave('loteria-tabla'), null);
     if (tablaNum) mostrarTabla(); else mostrarElegir();
   }
   function mostrarTabla() {
@@ -330,7 +387,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   $('opciones-tabla').addEventListener('click', function (e) {
     var b = e.target.closest('.op-tabla');
     if (!b) return;
-    tablaNum = +b.dataset.n; guardar('loteria-tabla', tablaNum);
+    tablaNum = +b.dataset.n; guardar(clave('loteria-tabla'), tablaNum);
     mostrarTabla(); scrollTo(0, 0);
   });
   $('btn-otras').addEventListener('click', mostrarElegir);
@@ -338,7 +395,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   function pintarTabla() {
     $('tabla-num').textContent = tablaNum;
     $('aviso-num').textContent = tablaNum;
-    marcas = leer('loteria-marcas-' + tablaNum, []);
+    marcas = leer(clave('loteria-marcas') + '-' + tablaNum, []);
     var ids = cartasDeTabla(tablaNum);
     $('tabla').innerHTML = ids.map(function (id) {
       var c = CARTAS[id], on = marcas.indexOf(id) >= 0;
@@ -351,15 +408,15 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
     var id = +b.dataset.id, i = marcas.indexOf(id);
     if (i >= 0) marcas.splice(i, 1); else marcas.push(id);
     b.setAttribute('aria-pressed', String(i < 0));
-    guardar('loteria-marcas-' + tablaNum, marcas);
+    guardar(clave('loteria-marcas') + '-' + tablaNum, marcas);
     if (navigator.vibrate) { try { navigator.vibrate(15); } catch (er) {} }
   });
-  $('btn-limpiar').addEventListener('click', function () { marcas = []; guardar('loteria-marcas-' + tablaNum, marcas); pintarTabla(); });
+  $('btn-limpiar').addEventListener('click', function () { marcas = []; guardar(clave('loteria-marcas') + '-' + tablaNum, marcas); pintarTabla(); });
   $('btn-loteria').addEventListener('click', function () { $('aviso-lot').hidden = false; $('cerrar-aviso').focus(); });
   $('cerrar-aviso').addEventListener('click', function () { $('aviso-lot').hidden = true; });
   $('btn-cambiar').addEventListener('click', function () {
     var n = parseInt($('otra-tabla').value, 10);
-    if (n >= 1 && n <= 999) { tablaNum = n; guardar('loteria-tabla', n); $('otra-tabla').value = ''; mostrarTabla(); }
+    if (n >= 1 && n <= 999) { tablaNum = n; guardar(clave('loteria-tabla'), n); $('otra-tabla').value = ''; mostrarTabla(); }
   });
 
   // ---- Cantar ----
@@ -367,16 +424,29 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   function nuevaPartida() {
     partida = { orden: barajar(CARTAS.length, Math.floor(Math.random() * 1e9)), cantadas: 0 };
     vista = -1;
-    guardar('loteria-partida', partida);
+    guardar(clave('loteria-partida'), partida);
   }
+  var ronda = leer('loteria-ronda', 'tema44');
+  if (!MAZOS[ronda]) ronda = 'tema44';
   function iniciarCantar() {
+    if (!armado || ronda !== mazoId) {
+      armado = true;
+      usarMazo(ronda);
+      partida = null;
+    }
     if (!partida) {
-      partida = leer('loteria-partida', null);
+      partida = leer(clave('loteria-partida'), null);
       if (!partida || !partida.orden || partida.orden.length !== CARTAS.length) nuevaPartida();
       vista = partida.cantadas - 1;
     }
-    if (!armado) { armado = true; pintarQR(); }
+    pintarQR();
     pintarCanto(false);
+  }
+  function cambiarRonda(id) {
+    if (id === mazoId || !MAZOS[id]) return;
+    ronda = id; guardar('loteria-ronda', id);
+    $('resultado').innerHTML = '';
+    iniciarCantar();
   }
   function cantadasSet() { return partida.orden.slice(0, partida.cantadas); }
   function pintarCanto(animar) {
@@ -408,10 +478,11 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
     if (partida.cantadas >= CARTAS.length) return;
     partida.cantadas++;
     vista = partida.cantadas - 1;
-    guardar('loteria-partida', partida);
+    guardar(clave('loteria-partida'), partida);
     pintarCanto(true);
   }
   if (!SOLO_JUGAR) {
+  $('ronda').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) cambiarRonda(b.dataset.mazo); });
   $('btn-siguiente').addEventListener('click', siguiente);
   $('btn-anterior').addEventListener('click', function () { if (vista > 0) { vista--; pintarCanto(true); } });
   var confirmar = false, tConf = null;
@@ -448,7 +519,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   }
 
   function pintarQR() {
-    var url = URL_JUEGO ? URL_JUEGO + '#jugar' : '';
+    var url = URL_JUEGO ? URL_JUEGO + '#' + MAZO.hash : '';
     $('qr-url').textContent = url || 'El enlace aparecerá aquí cuando la página esté publicada.';
     if (!url || typeof qrcode !== 'function') {
       $('qr').innerHTML = '<span>' + (url ? 'Sin QR: escriban el enlace de la derecha.' : 'QR pendiente') + '</span>';
